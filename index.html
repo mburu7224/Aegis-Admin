@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>ADMIN UPDATE</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruiru Media House - Admin</title>
+    <!-- CSS will be provided separately -->
+    <link rel="stylesheet" href="admin.css">
+    <!-- Font Awesome for icons (trash, edit, restore, etc.) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Wrapper - Contains the fixed sidebar on desktop and the mobile menu content -->
+        <div class="sidebar-wrapper">
+            <header class="sidebar-header">
+                <h1>Ruiru Media House</h1>
+                <div class="header-actions mobile-only">
+                    <!-- These buttons are shown inside the mobile sidebar header -->
+                    <button class="search-btn">Search content</button>
+                    <!-- The main upload button is now fixed on the homepage -->
+                </div>
+            </header>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-item active" data-section="home">
+                        <i class="fas fa-home"></i> Home
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="sermons">
+                        <i class="fas fa-church"></i> Sermons LIVE
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="entertainment">
+                        <i class="fas fa-film"></i> Entertainment
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="bible-study">
+                        <i class="fas fa-book-bible"></i> Bible Study
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="events">
+                        <i class="fas fa-calendar-alt"></i> Events
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="announcement">
+                        <i class="fas fa-bullhorn"></i> Announcement
+                    </a></li>
+                    <li><a href="#" class="nav-item" data-section="archive">
+                        <i class="fas fa-archive"></i> Archive
+                    </a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content Area Wrapper - Handles scrolling for content -->
+        <div class="main-content-wrapper">
+            <header class="main-header">
+                <button class="menu-toggle mobile-only">
+                    <!-- This is the hamburger icon -->
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search content by title or description...">
+                    <button class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <!-- Desktop upload button is now gone from here, replaced by fixed button on homepage -->
+            </header>
+
+            <main class="content-display">
+                <section id="home-section" class="content-section active">
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-broadcast-tower"></i></div>
+                        <h2>Welcome to Ruiru Media House Admin</h2>
+                        <p>Manage live streams, music, videos, Bible study materials, events, and announcements.</p>
+                    </div>
+                    <!-- New fixed upload button on the homepage -->
+                    <button id="fixedUploadButton" class="fixed-upload-btn desktop-only">
+                        <i class="fas fa-upload"></i> Upload New Content
+                    </button>
+                    <!-- New button to navigate to Archive section from homepage -->
+                    <button id="viewArchiveButton" class="view-archive-btn">
+                        <i class="fas fa-archive"></i> View Archived Content
+                    </button>
+                </section>
+
+                <section id="sermons-section" class="content-section">
+                    <h2>Sermons LIVE</h2>
+                    <div id="sermons-container" class="content-list"></div>
+                    <!-- Add New Sermon button removed -->
+                </section>
+
+                <section id="entertainment-section" class="content-section">
+                    <h2>Entertainment</h2>
+                    <div id="entertainment-container" class="content-list"></div>
+                    <!-- Add New Entertainment button removed -->
+                </section>
+
+                <section id="bible-study-section" class="content-section">
+                    <h2>Bible Study</h2>
+                    <div id="bible-study-container" class="content-list"></div>
+                    <!-- Add New Bible Study button removed -->
+                </section>
+
+                <section id="events-section" class="content-section">
+                    <h2>Events</h2>
+                    <div id="events-container" class="content-list"></div>
+                    <!-- Add New Event button removed -->
+                </section>
+
+                <section id="announcement-section" class="content-section">
+                    <h2>Announcements</h2>
+                    <div id="announcement-container" class="content-list"></div>
+                    <!-- Add New Announcement button removed -->
+                </section>
+
+                <!-- New Archive Section -->
+                <section id="archive-section" class="content-section">
+                    <h2>Archived Content</h2>
+                    <div id="archive-container" class="content-list"></div>
+                    <p id="archive-empty-message" class="text-center-message" style="display: none;">No items in the archive.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing new content -->
+    <div id="addContentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modalTitle">Add New Content</h2>
+            <form id="addContentForm">
+                <div id="contentEntriesContainer">
+                    <!-- Initial content entry will be dynamically added here by JS -->
+                </div>
+                <button type="button" id="addMoreContentBtn" class="add-more-btn"><i class="fas fa-plus"></i> Add Another Content Item</button>
+                <button type="submit" id="saveContentBtn">Save Content</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal (replaces alert/confirm) -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content small-modal">
+            <h2 id="confirmationMessage"></h2>
+            <div class="modal-actions">
+                <button id="confirmYes" class="btn btn-danger">Yes</button>
+                <button id="confirmNo" class="btn btn-secondary">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JavaScript will be provided separately -->
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
+<!-- partial -->
+  <script type="module" src="./script.js"></script>
+
+</body>
+</html>
