@@ -17,17 +17,24 @@ const ADMIN_SECRET_KEY = "NewRuiruMediaKey2025!";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, onSnapshot, updateDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-storage.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
 // Initialize Firebase app, Firestore, and Storage instances
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 const contentCollectionRef = collection(db, "content_items");
+const launchpadPluginsCollectionRef = collection(db, "LaunchpadPlugins");
 
 // --- Global Variables and DOM Elements ---
 let activeSection = 'home';
 let currentSearchTerm = '';
 let editingDocId = null; // Stores the ID of the document being edited
+let launchpadPluginsUnsubscribe = null;
+let launchpadPluginsCache = [];
+let editingLaunchpadPluginId = null;
+let editingLaunchpadPluginImageUrl = '';
 
 // DOM Elements
 const sidebarWrapper = document.querySelector('.sidebar-wrapper');
@@ -44,6 +51,21 @@ const addContentForm = document.getElementById('addContentForm');
 const contentEntriesContainer = document.getElementById('contentEntriesContainer');
 const addMoreContentBtn = document.getElementById('addMoreContentBtn');
 const saveContentBtn = document.getElementById('saveContentBtn');
+
+// Launchpad modal and actions
+const launchpadPluginBtn = document.getElementById('launchpadPluginBtn');
+const launchpadBlankBtn = document.getElementById('launchpadBlankBtn');
+const launchpadPluginModal = document.getElementById('launchpadPluginModal');
+const launchpadBlankModal = document.getElementById('launchpadBlankModal');
+const launchpadPluginCloseBtn = document.querySelector('.launchpad-plugin-close');
+const launchpadBlankCloseBtn = document.querySelector('.launchpad-blank-close');
+const launchpadPluginForm = document.getElementById('launchpadPluginForm');
+const launchpadPluginSaveBtn = document.getElementById('launchpadPluginSaveBtn');
+const launchpadPluginNameInput = document.getElementById('launchpadPluginName');
+const launchpadPluginImageFileInput = document.getElementById('launchpadPluginImageFile');
+const launchpadPluginImageUrlInput = document.getElementById('launchpadPluginImageUrl');
+const launchpadPluginUrlInput = document.getElementById('launchpadPluginUrl');
+const launchpadPluginAdminKeyInput = document.getElementById('launchpadPluginAdminKey');
 
 // Homepage Buttons
 const fixedUploadButton = document.getElementById('fixedUploadButton');
@@ -95,7 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Load content for the selected section (unless it's home)
             if (activeSection !== 'home') {
-                loadContentFirebase(activeSection, currentSearchTerm);
+                if (activeSection === 'launchpad') {
+                    loadLaunchpadPlugins(currentSearchTerm);
+                } else {
+                    loadContentFirebase(activeSection, currentSearchTerm);
+                }
             }
         });
     });
@@ -104,7 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', () => {
         currentSearchTerm = searchInput.value.trim();
         if (activeSection !== 'home') {
-            loadContentFirebase(activeSection, currentSearchTerm);
+            if (activeSection === 'launchpad') {
+                loadLaunchpadPlugins(currentSearchTerm);
+            } else {
+                loadContentFirebase(activeSection, currentSearchTerm);
+            }
         }
     });
 
@@ -130,6 +160,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Launchpad: action buttons ---
+    if (launchpadPluginBtn) {
+        launchpadPluginBtn.addEventListener('click', openLaunchpadPluginModal);
+    }
+    if (launchpadBlankBtn) {
+        launchpadBlankBtn.addEventListener('click', openLaunchpadBlankModal);
+    }
+    if (launchpadPluginCloseBtn) {
+        launchpadPluginCloseBtn.addEventListener('click', closeLaunchpadPluginModal);
+    }
+    if (launchpadBlankCloseBtn) {
+        launchpadBlankCloseBtn.addEventListener('click', closeLaunchpadBlankModal);
+    }
+    if (launchpadPluginForm) {
+        // Temporarily disabled for development:
+        // use explicit JS validation/toasts instead of silent native form blocking.
+        launchpadPluginForm.setAttribute('novalidate', 'novalidate');
+        launchpadPluginForm.addEventListener('submit', handleLaunchpadPluginSubmit);
+    }
+    if (launchpadPluginSaveBtn && launchpadPluginForm) {
+        launchpadPluginSaveBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            launchpadPluginForm.requestSubmit();
+        });
+    }
+
     // --- Modal Close Button ---
     closeButton.addEventListener('click', () => {
         addContentModal.classList.remove('active');
@@ -151,6 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmationModal.classList.remove('active');
             // Important: Do not resolve the promise here, as it would imply a 'cancel'
             // The promise is resolved by clicking Yes/No buttons
+        } else if (e.target === launchpadPluginModal) {
+            closeLaunchpadPluginModal();
+        } else if (e.target === launchpadBlankModal) {
+            closeLaunchpadBlankModal();
         }
     });
 
@@ -356,7 +416,7 @@ function addContentEntry(data = {}, docId = null) {
             <option value="entertainment">Entertainment</option>
             <option value="bible-study">Bible Study</option>
             <option value="events">Events</option>
-            <option value="announcement">Announcement</option>
+            <option value="launchpad" disabled>Launchpad (use Plugin +)</option>
         </select>
 
         <label for="title-${entryId}">Title:</label>
@@ -487,6 +547,328 @@ function showConfirmation(message) {
     });
 }
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"'`=\/]/g, (s) => {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;', '=': '&#61;', '/': '&#47;' })[s];
+    });
+}
+
+function normalizeUrl(rawUrl) {
+    if (!rawUrl) return '';
+    let url = rawUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+        url = `https://${url}`;
+    }
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+        return parsed.toString();
+    } catch (error) {
+        return '';
+    }
+}
+
+function normalizeGoogleDriveImageUrl(rawUrl) {
+    const normalized = normalizeUrl(rawUrl);
+    if (!normalized) return '';
+
+    try {
+        const parsed = new URL(normalized);
+        const hostname = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+        if (hostname !== 'drive.google.com') return normalized;
+
+        const filePathMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
+        let fileId = filePathMatch ? filePathMatch[1] : '';
+        if (!fileId) {
+            fileId = parsed.searchParams.get('id') || '';
+        }
+
+        if (!fileId) return normalized;
+        return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`;
+    } catch (error) {
+        return normalized;
+    }
+}
+
+function resolveHostLabel(url) {
+    try {
+        return new URL(url).hostname.replace(/^www\./i, '');
+    } catch (error) {
+        return 'Unknown Host';
+    }
+}
+
+function openLaunchpadPluginModal(isEditMode = false) {
+    if (!launchpadPluginModal) return;
+    if (!isEditMode) {
+        editingLaunchpadPluginId = null;
+        editingLaunchpadPluginImageUrl = '';
+        if (launchpadPluginForm) launchpadPluginForm.reset();
+        const modalHeading = launchpadPluginModal.querySelector('h2');
+        if (modalHeading) modalHeading.textContent = 'Add Launchpad Plugin';
+        if (launchpadPluginSaveBtn) launchpadPluginSaveBtn.textContent = 'Save Plugin';
+    }
+    launchpadPluginModal.classList.add('active');
+}
+
+function closeLaunchpadPluginModal() {
+    if (!launchpadPluginModal) return;
+    launchpadPluginModal.classList.remove('active');
+    if (launchpadPluginForm) launchpadPluginForm.reset();
+    editingLaunchpadPluginId = null;
+    editingLaunchpadPluginImageUrl = '';
+    const modalHeading = launchpadPluginModal.querySelector('h2');
+    if (modalHeading) modalHeading.textContent = 'Add Launchpad Plugin';
+    if (launchpadPluginSaveBtn) launchpadPluginSaveBtn.textContent = 'Save Plugin';
+}
+
+function openLaunchpadBlankModal() {
+    if (!launchpadBlankModal) return;
+    launchpadBlankModal.classList.add('active');
+}
+
+function closeLaunchpadBlankModal() {
+    if (!launchpadBlankModal) return;
+    launchpadBlankModal.classList.remove('active');
+}
+
+async function handleLaunchpadPluginSubmit(e) {
+    e.preventDefault();
+
+    const isEditingLaunchpadPlugin = Boolean(editingLaunchpadPluginId);
+    const title = launchpadPluginNameInput?.value?.trim() || '';
+    const hostedUrl = normalizeUrl(launchpadPluginUrlInput?.value || '');
+    const imageUrlInput = normalizeGoogleDriveImageUrl(launchpadPluginImageUrlInput?.value || '');
+    const imageFile = launchpadPluginImageFileInput?.files?.[0] || null;
+    const adminKey = launchpadPluginAdminKeyInput?.value?.trim() || '';
+    // Temporarily disabled for development
+    // createdBy is fixed to a development marker instead of auth state.
+    const currentUserUid = 'dev-temp-user';
+
+    // Temporarily disabled for development
+    // Launchpad plugin creation no longer requires sign-in during development.
+
+    if (!title) {
+        showToast('Title is required.', 'error');
+        return;
+    }
+
+    if (!hostedUrl) {
+        showToast('Hosted URL must be a valid http(s) URL.', 'error');
+        return;
+    }
+
+    if (!imageFile && !imageUrlInput && !editingLaunchpadPluginImageUrl) {
+        showToast('Please upload an icon or provide an image URL.', 'error');
+        return;
+    }
+
+    if (!adminKey) {
+        showToast('Admin Key is required.', 'error');
+        return;
+    }
+
+    if (adminKey !== ADMIN_SECRET_KEY) {
+        showToast('Invalid Admin Key. Save blocked.', 'error');
+        return;
+    }
+
+    let resolvedImageUrl = imageUrlInput || editingLaunchpadPluginImageUrl;
+    if (launchpadPluginSaveBtn) {
+        launchpadPluginSaveBtn.disabled = true;
+        launchpadPluginSaveBtn.textContent = isEditingLaunchpadPlugin ? 'Updating...' : 'Saving...';
+    }
+    showToast(isEditingLaunchpadPlugin ? 'Updating Launchpad plugin...' : 'Saving Launchpad plugin...', 'info', 1800);
+
+    try {
+        if (imageFile) {
+            const storageRef = ref(storage, `launchpad/icons/${Date.now()}-${imageFile.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, imageFile);
+
+            resolvedImageUrl = await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    () => {},
+                    (error) => reject(error),
+                    async () => {
+                        try {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(url);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }
+                );
+            });
+        }
+
+        const payload = {
+            title,
+            imageUrl: resolvedImageUrl,
+            projectUrl: hostedUrl,
+            name: title,
+            image: resolvedImageUrl,
+            url: hostedUrl,
+            adminKey
+        };
+
+        if (isEditingLaunchpadPlugin) {
+            await updateDoc(doc(db, "LaunchpadPlugins", editingLaunchpadPluginId), {
+                ...payload,
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            await addDoc(launchpadPluginsCollectionRef, {
+                ...payload,
+                createdBy: currentUserUid,
+                timestamp: serverTimestamp()
+            });
+        }
+
+        closeLaunchpadPluginModal();
+        showToast(`Launchpad plugin "${title}" ${isEditingLaunchpadPlugin ? 'updated' : 'saved'} successfully.`, 'success');
+    } catch (error) {
+        console.error(`Error ${isEditingLaunchpadPlugin ? 'updating' : 'saving'} Launchpad plugin:`, error);
+        if (imageFile && !imageUrlInput) {
+            showToast('Icon upload failed. Try using Profile Image URL (without file upload).', 'error', 5000);
+        }
+        showToast(`Failed to ${isEditingLaunchpadPlugin ? 'update' : 'save'} Launchpad plugin: ${error.message}`, 'error', 5000);
+    } finally {
+        if (launchpadPluginSaveBtn) {
+            launchpadPluginSaveBtn.disabled = false;
+            launchpadPluginSaveBtn.textContent = editingLaunchpadPluginId ? 'Update Plugin' : 'Save Plugin';
+        }
+    }
+}
+
+function editLaunchpadPlugin(plugin) {
+    if (!plugin || !plugin.id) return;
+    editingLaunchpadPluginId = plugin.id;
+    editingLaunchpadPluginImageUrl = plugin.imageUrl || plugin.image || '';
+
+    if (launchpadPluginNameInput) {
+        launchpadPluginNameInput.value = plugin.title || plugin.name || '';
+    }
+    if (launchpadPluginUrlInput) {
+        launchpadPluginUrlInput.value = plugin.projectUrl || plugin.url || '';
+    }
+    if (launchpadPluginImageUrlInput) {
+        launchpadPluginImageUrlInput.value = editingLaunchpadPluginImageUrl;
+    }
+    if (launchpadPluginImageFileInput) {
+        launchpadPluginImageFileInput.value = '';
+    }
+    if (launchpadPluginAdminKeyInput) {
+        launchpadPluginAdminKeyInput.value = '';
+    }
+
+    const modalHeading = launchpadPluginModal?.querySelector('h2');
+    if (modalHeading) modalHeading.textContent = 'Edit Launchpad Plugin';
+    if (launchpadPluginSaveBtn) launchpadPluginSaveBtn.textContent = 'Update Plugin';
+    openLaunchpadPluginModal(true);
+}
+
+function renderLaunchpadPlugins(searchTerm = '') {
+    const contentContainer = document.getElementById('launchpad-container');
+    if (!contentContainer) return;
+
+    const normalizedSearch = (searchTerm || '').toLowerCase();
+    const filteredPlugins = launchpadPluginsCache.filter((plugin) => {
+        const hostLabel = resolveHostLabel(plugin.url || '');
+        return !normalizedSearch ||
+            (plugin.name || '').toLowerCase().includes(normalizedSearch) ||
+            (plugin.url || '').toLowerCase().includes(normalizedSearch) ||
+            hostLabel.toLowerCase().includes(normalizedSearch);
+    });
+
+    contentContainer.innerHTML = '';
+
+    if (filteredPlugins.length === 0) {
+        const emptyMessage = normalizedSearch
+            ? `No Launchpad plugins match "${escapeHtml(searchTerm)}".`
+            : 'No Launchpad plugins yet. Click "Plugin +" to add one.';
+        contentContainer.innerHTML = `<p class="text-center-message">${emptyMessage}</p>`;
+        return;
+    }
+
+    filteredPlugins.forEach((plugin) => {
+        const card = document.createElement('article');
+        card.className = 'launchpad-plugin-card';
+
+        const media = plugin.image
+            ? `<img src="${escapeHtml(plugin.image)}" alt="${escapeHtml(plugin.name || 'Plugin icon')}">`
+            : '<i class="fas fa-puzzle-piece" aria-hidden="true"></i>';
+
+        const hostLabel = resolveHostLabel(plugin.url || '');
+        card.innerHTML = `
+            <div class="launchpad-plugin-media">${media}</div>
+            <h3 class="launchpad-plugin-name">${escapeHtml(plugin.name || 'Untitled Plugin')}</h3>
+            <p class="launchpad-plugin-host"><strong>Host:</strong> ${escapeHtml(hostLabel)}</p>
+            <p class="launchpad-plugin-url">${escapeHtml(plugin.url || '')}</p>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'launchpad-plugin-actions';
+
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'launchpad-plugin-edit-btn';
+        editButton.innerHTML = '<i class="fas fa-pen"></i> Edit';
+        editButton.addEventListener('click', () => editLaunchpadPlugin(plugin));
+        actions.appendChild(editButton);
+
+        card.appendChild(actions);
+
+        contentContainer.appendChild(card);
+    });
+}
+
+function loadLaunchpadPlugins(searchTerm = '') {
+    const contentContainer = document.getElementById('launchpad-container');
+    if (!contentContainer) {
+        console.warn('Launchpad container not found.');
+        return;
+    }
+
+    currentSearchTerm = searchTerm || '';
+
+    if (!launchpadPluginsUnsubscribe) {
+        contentContainer.innerHTML = '<p class="text-center-message">Loading Launchpad plugins...</p>';
+        const q = query(launchpadPluginsCollectionRef);
+        launchpadPluginsUnsubscribe = onSnapshot(q, (snapshot) => {
+            launchpadPluginsCache = [];
+            snapshot.forEach((docSnapshot) => {
+                launchpadPluginsCache.push({ id: docSnapshot.id, data: docSnapshot.data() });
+            });
+
+            launchpadPluginsCache.sort((a, b) => {
+                const tsA = a.data.timestamp ? a.data.timestamp.toDate() : new Date(0);
+                const tsB = b.data.timestamp ? b.data.timestamp.toDate() : new Date(0);
+                return tsB - tsA;
+            });
+
+            launchpadPluginsCache = launchpadPluginsCache.map((item) => ({
+                id: item.id,
+                title: item.data.title || item.data.name || '',
+                name: item.data.title || item.data.name || '',
+                imageUrl: normalizeGoogleDriveImageUrl(item.data.imageUrl || item.data.image || ''),
+                image: normalizeGoogleDriveImageUrl(item.data.imageUrl || item.data.image || ''),
+                projectUrl: normalizeUrl(item.data.projectUrl || item.data.url || '') || (item.data.projectUrl || item.data.url || ''),
+                url: normalizeUrl(item.data.projectUrl || item.data.url || '') || (item.data.projectUrl || item.data.url || ''),
+                createdBy: item.data.createdBy || '',
+                timestamp: item.data.timestamp || null
+            }));
+
+            renderLaunchpadPlugins(currentSearchTerm);
+        }, (error) => {
+            console.error('Error loading Launchpad plugins:', error);
+            contentContainer.innerHTML = '<p class="text-center-message">Error loading Launchpad plugins.</p>';
+        });
+    } else {
+        renderLaunchpadPlugins(currentSearchTerm);
+    }
+}
+
 
 /**
  * Loads and displays content for a specific section from Firestore.
@@ -496,6 +878,11 @@ function showConfirmation(message) {
  * @param {string} [filterDate=null] - Optional date string (YYYY-MM-DD) to filter content by eventDate.
  */
 function loadContentFirebase(section, searchTerm = '', filterDate = null) {
+    if (section === 'launchpad') {
+        loadLaunchpadPlugins(searchTerm);
+        return;
+    }
+
     const contentContainer = document.getElementById(`${section}-container`);
     if (!contentContainer) {
         console.warn(`Content container for section "${section}" not found.`);

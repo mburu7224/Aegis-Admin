@@ -48,8 +48,8 @@
                     <li><a href="#" class="nav-item" data-section="events">
                         <i class="fas fa-calendar-alt"></i> Events
                     </a></li>
-                    <li><a href="#" class="nav-item" data-section="announcement">
-                        <i class="fas fa-bullhorn"></i> Announcement
+                    <li><a href="#" class="nav-item" data-section="launchpad">
+                        <i class="fas fa-rocket"></i> Launchpad
                     </a></li>
                     <li><a href="#" class="nav-item" data-section="archive">
                         <i class="fas fa-archive"></i> Archive
@@ -79,7 +79,7 @@
                     <div class="welcome-card">
                         <div class="icon-placeholder"><i class="fas fa-broadcast-tower"></i></div>
                         <h2>Welcome to Ruiru Media House Admin</h2>
-                        <p>Manage live streams, music, videos, Bible study materials, events, and announcements.</p>
+                        <p>Manage live streams, music, videos, Bible study materials, events, and Launchpad plugins.</p>
                     </div>
                     <!-- New fixed upload button on the homepage -->
                     <button id="fixedUploadButton" class="fixed-upload-btn desktop-only">
@@ -115,10 +115,17 @@
                     <!-- Add New Event button removed -->
                 </section>
 
-                <section id="announcement-section" class="content-section">
-                    <h2>Announcements</h2>
-                    <div id="announcement-container" class="content-list"></div>
-                    <!-- Add New Announcement button removed -->
+                <section id="launchpad-section" class="content-section">
+                    <h2>Launchpad</h2>
+                    <div class="launchpad-admin-actions">
+                        <button id="launchpadPluginBtn" class="launchpad-plus-btn launchpad-plugin-btn" type="button">
+                            <i class="fas fa-plus"></i> Plugin +
+                        </button>
+                        <button id="launchpadBlankBtn" class="launchpad-plus-btn launchpad-blank-btn" type="button" aria-label="Open blank internal page template">
+                            +
+                        </button>
+                    </div>
+                    <div id="launchpad-container" class="content-list"></div>
                 </section>
 
                 <!-- New Archive Section -->
@@ -146,6 +153,45 @@
         </div>
     </div>
 
+    <!-- Launchpad Plugin Modal -->
+    <div id="launchpadPluginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button launchpad-plugin-close">&times;</span>
+            <h2>Add Launchpad Plugin</h2>
+            <form id="launchpadPluginForm">
+                <label for="launchpadPluginName">Title:</label>
+                <input type="text" id="launchpadPluginName" required>
+
+                <label for="launchpadPluginImageFile">Profile Image (Icon Upload):</label>
+                <input type="file" id="launchpadPluginImageFile" accept="image/*">
+
+                <label for="launchpadPluginImageUrl">Image URL:</label>
+                <input type="url" id="launchpadPluginImageUrl" placeholder="https://example.com/plugin-icon.png">
+
+                <label for="launchpadPluginUrl">External Project URL:</label>
+                <input type="url" id="launchpadPluginUrl" placeholder="https://your-plugin-hosted-url.com" required>
+
+                <label for="launchpadPluginAdminKey">Admin Key:</label>
+                <input type="password" id="launchpadPluginAdminKey" placeholder="Enter admin key" required>
+
+                <button type="submit" id="launchpadPluginSaveBtn">Save Plugin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Launchpad Blank Template Modal -->
+    <div id="launchpadBlankModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button launchpad-blank-close">&times;</span>
+            <h2>Blank Internal Page Template</h2>
+            <div class="launchpad-blank-template">
+                <h3>New Internal Tool (Template)</h3>
+                <p>This blank page shell is ready for your custom internal tool.</p>
+                <div class="launchpad-blank-canvas"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Confirmation Modal (replaces alert/confirm) -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content small-modal">
@@ -160,12 +206,11 @@
     <!-- Custom Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- JavaScript will be provided separately -->
-    <script type="module" src="admin.js"></script>
+    <!-- JavaScript -->
+    <script type="module" src="./script.js?v=dev-launchpad-auth-off"></script>
 </body>
 </html>
 <!-- partial -->
-  <script type="module" src="./script.js"></script>
 
 </body>
 </html>

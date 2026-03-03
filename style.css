@@ -301,6 +301,151 @@ body {
     transform: translateY(-2px);
 }
 
+/* Launchpad Admin Actions */
+.launchpad-admin-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.launchpad-plus-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95em;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+.launchpad-plus-btn:hover {
+    transform: translateY(-2px);
+}
+
+.launchpad-plugin-btn {
+    background-color: var(--primary-color);
+}
+
+.launchpad-plugin-btn:hover {
+    background-color: #2980b9;
+}
+
+.launchpad-blank-btn {
+    min-width: 46px;
+    padding: 10px 0;
+    font-size: 1.2em;
+    background-color: var(--secondary-color);
+}
+
+.launchpad-blank-btn:hover {
+    background-color: #34495e;
+}
+
+/* Launchpad cards (backend admin view) */
+.launchpad-plugin-card {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-background);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.launchpad-plugin-media {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    background: #f7f7f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.launchpad-plugin-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.launchpad-plugin-media i {
+    color: #86909c;
+    font-size: 1.3em;
+}
+
+.launchpad-plugin-name {
+    margin: 0;
+    font-size: 1.05em;
+    color: var(--secondary-color);
+}
+
+.launchpad-plugin-host,
+.launchpad-plugin-url {
+    margin: 0;
+    font-size: 0.88em;
+    color: #5f6b7a;
+    word-break: break-word;
+}
+
+.launchpad-plugin-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.launchpad-plugin-edit-btn {
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 0.86em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.launchpad-plugin-edit-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+/* Blank template modal content */
+.launchpad-blank-template {
+    border: 1px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    background: #fafbfd;
+}
+
+.launchpad-blank-template h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: var(--secondary-color);
+}
+
+.launchpad-blank-template p {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #555;
+}
+
+.launchpad-blank-canvas {
+    min-height: 220px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+}
+
 
 /* Content List Styling */
 .content-list {
