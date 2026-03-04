@@ -65,7 +65,8 @@ const launchpadPluginNameInput = document.getElementById('launchpadPluginName');
 const launchpadPluginImageFileInput = document.getElementById('launchpadPluginImageFile');
 const launchpadPluginImageUrlInput = document.getElementById('launchpadPluginImageUrl');
 const launchpadPluginUrlInput = document.getElementById('launchpadPluginUrl');
-const launchpadPluginAdminKeyInput = document.getElementById('launchpadPluginAdminKey');
+const launchpadPluginVisibilityInput = document.getElementById('launchpadPluginVisibility');
+const launchpadPluginCancelBtn = document.getElementById('launchpadPluginCancelBtn');
 
 // Homepage Buttons
 const fixedUploadButton = document.getElementById('fixedUploadButton');
@@ -169,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (launchpadPluginCloseBtn) {
         launchpadPluginCloseBtn.addEventListener('click', closeLaunchpadPluginModal);
+    }
+    if (launchpadPluginCancelBtn) {
+        launchpadPluginCancelBtn.addEventListener('click', closeLaunchpadPluginModal);
     }
     if (launchpadBlankCloseBtn) {
         launchpadBlankCloseBtn.addEventListener('click', closeLaunchpadBlankModal);
@@ -557,6 +561,12 @@ function escapeHtml(str) {
 function normalizeUrl(rawUrl) {
     if (!rawUrl) return '';
     let url = rawUrl.trim();
+    if (
+        (url.startsWith('"') && url.endsWith('"')) ||
+        (url.startsWith("'") && url.endsWith("'"))
+    ) {
+        url = url.slice(1, -1).trim();
+    }
     if (!/^https?:\/\//i.test(url)) {
         url = `https://${url}`;
     }
@@ -569,6 +579,52 @@ function normalizeUrl(rawUrl) {
     }
 }
 
+function extractGoogleDriveFileId(rawUrl) {
+    if (!rawUrl) return '';
+    const raw = String(rawUrl).trim();
+
+    const parseCandidates = [];
+    if (/^https?:\/\//i.test(raw)) {
+        parseCandidates.push(raw);
+    } else {
+        parseCandidates.push(`https://${raw}`);
+    }
+
+    for (const candidate of parseCandidates) {
+        try {
+            const parsed = new URL(candidate);
+            const pathname = decodeURIComponent(parsed.pathname || '');
+
+            const fromQuery =
+                parsed.searchParams.get('id') ||
+                parsed.searchParams.get('fileId') ||
+                '';
+            if (fromQuery) return fromQuery.trim();
+
+            const fileMatch = pathname.match(/\/file\/d\/([^/?#]+)/i);
+            if (fileMatch?.[1]) return fileMatch[1];
+
+            const genericMatch = pathname.match(/\/d\/([^/?#]+)/i);
+            if (genericMatch?.[1]) return genericMatch[1];
+        } catch (error) {
+            // Fall through to regex pass below.
+        }
+    }
+
+    const regexMatches = [
+        raw.match(/\/file\/d\/([^/?#]+)/i),
+        raw.match(/\/d\/([^/?#]+)/i),
+        raw.match(/[?&]id=([^&?#]+)/i)
+    ];
+    for (const match of regexMatches) {
+        if (match?.[1]) {
+            return decodeURIComponent(match[1]).trim();
+        }
+    }
+
+    return '';
+}
+
 function normalizeGoogleDriveImageUrl(rawUrl) {
     const normalized = normalizeUrl(rawUrl);
     if (!normalized) return '';
@@ -576,19 +632,45 @@ function normalizeGoogleDriveImageUrl(rawUrl) {
     try {
         const parsed = new URL(normalized);
         const hostname = parsed.hostname.replace(/^www\./i, '').toLowerCase();
-        if (hostname !== 'drive.google.com') return normalized;
+        const isGoogleDriveHost =
+            hostname === 'drive.google.com' ||
+            hostname === 'docs.google.com' ||
+            hostname.endsWith('.googleusercontent.com');
+        if (!isGoogleDriveHost) return normalized;
 
-        const filePathMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
-        let fileId = filePathMatch ? filePathMatch[1] : '';
+        const fileId = extractGoogleDriveFileId(normalized) || extractGoogleDriveFileId(rawUrl);
         if (!fileId) {
-            fileId = parsed.searchParams.get('id') || '';
+            console.warn('Could not extract Google Drive file id from image URL:', rawUrl);
+            return normalized;
         }
-
-        if (!fileId) return normalized;
         return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`;
     } catch (error) {
         return normalized;
     }
+}
+
+function getGoogleDriveImageFallbackUrls(rawUrl, normalizedUrl = '') {
+    const fileId = extractGoogleDriveFileId(normalizedUrl) || extractGoogleDriveFileId(rawUrl);
+    if (!fileId) return [];
+
+    const encodedId = encodeURIComponent(fileId);
+    const candidates = [
+        normalizedUrl || normalizeGoogleDriveImageUrl(rawUrl),
+        `https://drive.google.com/thumbnail?id=${encodedId}&sz=w1200`,
+        `https://lh3.googleusercontent.com/d/${encodedId}=s1200`,
+        `https://drive.google.com/uc?export=download&id=${encodedId}`
+    ];
+
+    const unique = [];
+    const seen = new Set();
+    candidates.forEach((candidate) => {
+        const normalizedCandidate = normalizeUrl(candidate);
+        if (!normalizedCandidate || seen.has(normalizedCandidate)) return;
+        seen.add(normalizedCandidate);
+        unique.push(normalizedCandidate);
+    });
+
+    return unique;
 }
 
 function resolveHostLabel(url) {
@@ -610,6 +692,9 @@ function openLaunchpadPluginModal(isEditMode = false) {
         if (launchpadPluginSaveBtn) launchpadPluginSaveBtn.textContent = 'Save Plugin';
     }
     launchpadPluginModal.classList.add('active');
+    if (launchpadPluginNameInput) {
+        setTimeout(() => launchpadPluginNameInput.focus(), 120);
+    }
 }
 
 function closeLaunchpadPluginModal() {
@@ -639,9 +724,11 @@ async function handleLaunchpadPluginSubmit(e) {
     const isEditingLaunchpadPlugin = Boolean(editingLaunchpadPluginId);
     const title = launchpadPluginNameInput?.value?.trim() || '';
     const hostedUrl = normalizeUrl(launchpadPluginUrlInput?.value || '');
-    const imageUrlInput = normalizeGoogleDriveImageUrl(launchpadPluginImageUrlInput?.value || '');
+    const rawImageUrlInput = launchpadPluginImageUrlInput?.value || '';
+    const imageUrlInput = normalizeGoogleDriveImageUrl(rawImageUrlInput);
     const imageFile = launchpadPluginImageFileInput?.files?.[0] || null;
-    const adminKey = launchpadPluginAdminKeyInput?.value?.trim() || '';
+    const visibility = (launchpadPluginVisibilityInput?.value || '').trim().toLowerCase();
+    const adminKey = ADMIN_SECRET_KEY;
     // Temporarily disabled for development
     // createdBy is fixed to a development marker instead of auth state.
     const currentUserUid = 'dev-temp-user';
@@ -659,22 +746,28 @@ async function handleLaunchpadPluginSubmit(e) {
         return;
     }
 
+    if (visibility !== 'public' && visibility !== 'private') {
+        showToast('Visibility is required. Choose Public or Private.', 'error');
+        return;
+    }
+
     if (!imageFile && !imageUrlInput && !editingLaunchpadPluginImageUrl) {
         showToast('Please upload an icon or provide an image URL.', 'error');
         return;
     }
 
     if (!adminKey) {
-        showToast('Admin Key is required.', 'error');
+        console.error('Launchpad plugin save blocked: ADMIN_SECRET_KEY is missing.');
+        showToast('Save blocked: admin key configuration is missing.', 'error', 5000);
         return;
     }
 
-    if (adminKey !== ADMIN_SECRET_KEY) {
-        showToast('Invalid Admin Key. Save blocked.', 'error');
-        return;
-    }
+    console.log('[Launchpad][Admin][Save] Image URL input normalization:', {
+        rawImageUrlInput,
+        normalizedImageUrlInput: imageUrlInput
+    });
 
-    let resolvedImageUrl = imageUrlInput || editingLaunchpadPluginImageUrl;
+    let resolvedImageUrl = imageUrlInput || normalizeGoogleDriveImageUrl(editingLaunchpadPluginImageUrl);
     if (launchpadPluginSaveBtn) {
         launchpadPluginSaveBtn.disabled = true;
         launchpadPluginSaveBtn.textContent = isEditingLaunchpadPlugin ? 'Updating...' : 'Saving...';
@@ -701,11 +794,14 @@ async function handleLaunchpadPluginSubmit(e) {
                 );
             });
         }
+        resolvedImageUrl = normalizeGoogleDriveImageUrl(resolvedImageUrl);
+        console.log('[Launchpad][Admin][Save] Final imageUrl before Firestore write:', resolvedImageUrl);
 
         const payload = {
             title,
             imageUrl: resolvedImageUrl,
             projectUrl: hostedUrl,
+            visibility,
             name: title,
             image: resolvedImageUrl,
             url: hostedUrl,
@@ -729,6 +825,9 @@ async function handleLaunchpadPluginSubmit(e) {
         showToast(`Launchpad plugin "${title}" ${isEditingLaunchpadPlugin ? 'updated' : 'saved'} successfully.`, 'success');
     } catch (error) {
         console.error(`Error ${isEditingLaunchpadPlugin ? 'updating' : 'saving'} Launchpad plugin:`, error);
+        if (error?.code === 'permission-denied') {
+            console.error('Firestore rule validation failed. Ensure adminKey is present and matches rule value.');
+        }
         if (imageFile && !imageUrlInput) {
             showToast('Icon upload failed. Try using Profile Image URL (without file upload).', 'error', 5000);
         }
@@ -745,6 +844,7 @@ function editLaunchpadPlugin(plugin) {
     if (!plugin || !plugin.id) return;
     editingLaunchpadPluginId = plugin.id;
     editingLaunchpadPluginImageUrl = plugin.imageUrl || plugin.image || '';
+    const pluginVisibility = (plugin.visibility || '').toLowerCase();
 
     if (launchpadPluginNameInput) {
         launchpadPluginNameInput.value = plugin.title || plugin.name || '';
@@ -758,8 +858,10 @@ function editLaunchpadPlugin(plugin) {
     if (launchpadPluginImageFileInput) {
         launchpadPluginImageFileInput.value = '';
     }
-    if (launchpadPluginAdminKeyInput) {
-        launchpadPluginAdminKeyInput.value = '';
+    if (launchpadPluginVisibilityInput) {
+        launchpadPluginVisibilityInput.value = pluginVisibility === 'public' || pluginVisibility === 'private'
+            ? pluginVisibility
+            : 'private';
     }
 
     const modalHeading = launchpadPluginModal?.querySelector('h2');
@@ -775,10 +877,12 @@ function renderLaunchpadPlugins(searchTerm = '') {
     const normalizedSearch = (searchTerm || '').toLowerCase();
     const filteredPlugins = launchpadPluginsCache.filter((plugin) => {
         const hostLabel = resolveHostLabel(plugin.url || '');
+        const visibilityLabel = plugin.visibility === 'public' ? 'public' : 'private';
         return !normalizedSearch ||
             (plugin.name || '').toLowerCase().includes(normalizedSearch) ||
             (plugin.url || '').toLowerCase().includes(normalizedSearch) ||
-            hostLabel.toLowerCase().includes(normalizedSearch);
+            hostLabel.toLowerCase().includes(normalizedSearch) ||
+            visibilityLabel.includes(normalizedSearch);
     });
 
     contentContainer.innerHTML = '';
@@ -794,6 +898,8 @@ function renderLaunchpadPlugins(searchTerm = '') {
     filteredPlugins.forEach((plugin) => {
         const card = document.createElement('article');
         card.className = 'launchpad-plugin-card';
+        const visibility = plugin.visibility === 'public' ? 'public' : 'private';
+        const visibilityLabel = visibility === 'public' ? 'Public' : 'Private';
 
         const media = plugin.image
             ? `<img src="${escapeHtml(plugin.image)}" alt="${escapeHtml(plugin.name || 'Plugin icon')}">`
@@ -802,10 +908,42 @@ function renderLaunchpadPlugins(searchTerm = '') {
         const hostLabel = resolveHostLabel(plugin.url || '');
         card.innerHTML = `
             <div class="launchpad-plugin-media">${media}</div>
-            <h3 class="launchpad-plugin-name">${escapeHtml(plugin.name || 'Untitled Plugin')}</h3>
+            <div class="launchpad-plugin-meta">
+                <h3 class="launchpad-plugin-name">${escapeHtml(plugin.name || 'Untitled Plugin')}</h3>
+                <p class="launchpad-plugin-visibility ${visibility}">${visibilityLabel}</p>
+            </div>
             <p class="launchpad-plugin-host"><strong>Host:</strong> ${escapeHtml(hostLabel)}</p>
             <p class="launchpad-plugin-url">${escapeHtml(plugin.url || '')}</p>
         `;
+
+        const cardImage = card.querySelector('.launchpad-plugin-media img');
+        if (cardImage) {
+            const fallbackQueue = getGoogleDriveImageFallbackUrls(plugin.image || plugin.imageUrl || '', plugin.image || '');
+            const initialSrc = normalizeUrl(plugin.image || '');
+            const retryQueue = fallbackQueue.filter((candidate) => candidate !== initialSrc);
+            cardImage.addEventListener('error', () => {
+                if (retryQueue.length) {
+                    const nextUrl = retryQueue.shift();
+                    console.warn('[Launchpad][Admin] Retrying plugin image with Google Drive fallback URL.', {
+                        pluginId: plugin.id,
+                        previousUrl: cardImage.currentSrc || plugin.image,
+                        retryUrl: nextUrl
+                    });
+                    cardImage.src = nextUrl;
+                    return;
+                }
+
+                console.error('[Launchpad][Admin] Plugin image failed to render.', {
+                    pluginId: plugin.id,
+                    imageUrl: plugin.image,
+                    note: 'Possible causes: invalid URL format, Google Drive file not public, or host blocking image access.'
+                });
+                const mediaContainer = card.querySelector('.launchpad-plugin-media');
+                if (mediaContainer) {
+                    mediaContainer.innerHTML = '<i class="fas fa-puzzle-piece" aria-hidden="true"></i>';
+                }
+            });
+        }
 
         const actions = document.createElement('div');
         actions.className = 'launchpad-plugin-actions';
@@ -855,9 +993,19 @@ function loadLaunchpadPlugins(searchTerm = '') {
                 image: normalizeGoogleDriveImageUrl(item.data.imageUrl || item.data.image || ''),
                 projectUrl: normalizeUrl(item.data.projectUrl || item.data.url || '') || (item.data.projectUrl || item.data.url || ''),
                 url: normalizeUrl(item.data.projectUrl || item.data.url || '') || (item.data.projectUrl || item.data.url || ''),
+                visibility: (item.data.visibility || '').toLowerCase() === 'public' ? 'public' : 'private',
                 createdBy: item.data.createdBy || '',
                 timestamp: item.data.timestamp || null
             }));
+
+            launchpadPluginsCache.forEach((plugin) => {
+                if (plugin.imageUrl) {
+                    console.debug('[Launchpad][Admin][Render] Normalized plugin imageUrl:', {
+                        pluginId: plugin.id,
+                        imageUrl: plugin.imageUrl
+                    });
+                }
+            });
 
             renderLaunchpadPlugins(currentSearchTerm);
         }, (error) => {

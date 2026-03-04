@@ -154,27 +154,51 @@
     </div>
 
     <!-- Launchpad Plugin Modal -->
-    <div id="launchpadPluginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button launchpad-plugin-close">&times;</span>
-            <h2>Add Launchpad Plugin</h2>
-            <form id="launchpadPluginForm">
-                <label for="launchpadPluginName">Title:</label>
-                <input type="text" id="launchpadPluginName" required>
+    <div id="launchpadPluginModal" class="modal launchpad-plugin-modal" role="dialog" aria-modal="true" aria-labelledby="launchpadPluginModalTitle">
+        <div class="modal-content launchpad-plugin-modal-content">
+            <button type="button" class="close-button launchpad-plugin-close" aria-label="Close add plugin modal">&times;</button>
+            <div class="launchpad-plugin-modal-header">
+                <h2 id="launchpadPluginModalTitle">Add Launchpad Plugin</h2>
+                <p>Create a Launchpad plugin and control where it appears.</p>
+            </div>
+            <form id="launchpadPluginForm" class="launchpad-plugin-form">
+                <div class="launchpad-plugin-modal-body">
+                    <div class="launchpad-plugin-field">
+                        <label for="launchpadPluginName">Plugin Title</label>
+                        <input type="text" id="launchpadPluginName" placeholder="e.g., Calendar Tool" required>
+                    </div>
 
-                <label for="launchpadPluginImageFile">Profile Image (Icon Upload):</label>
-                <input type="file" id="launchpadPluginImageFile" accept="image/*">
+                    <div class="launchpad-plugin-field">
+                        <label for="launchpadPluginImageFile">Profile Image (Icon Upload)</label>
+                        <input type="file" id="launchpadPluginImageFile" accept="image/*">
+                    </div>
 
-                <label for="launchpadPluginImageUrl">Image URL:</label>
-                <input type="url" id="launchpadPluginImageUrl" placeholder="https://example.com/plugin-icon.png">
+                    <div class="launchpad-plugin-field">
+                        <label for="launchpadPluginImageUrl">Image URL (Optional if uploaded)</label>
+                        <input type="url" id="launchpadPluginImageUrl" placeholder="https://example.com/plugin-icon.png">
+                    </div>
 
-                <label for="launchpadPluginUrl">External Project URL:</label>
-                <input type="url" id="launchpadPluginUrl" placeholder="https://your-plugin-hosted-url.com" required>
+                    <div class="launchpad-plugin-field">
+                        <label for="launchpadPluginUrl">External Project URL</label>
+                        <input type="url" id="launchpadPluginUrl" placeholder="https://your-plugin-hosted-url.com" required>
+                    </div>
 
-                <label for="launchpadPluginAdminKey">Admin Key:</label>
-                <input type="password" id="launchpadPluginAdminKey" placeholder="Enter admin key" required>
+                    <div class="launchpad-plugin-field">
+                        <label for="launchpadPluginVisibility">Visibility</label>
+                        <select id="launchpadPluginVisibility" required>
+                            <option value="" selected disabled>Select visibility</option>
+                            <option value="public">Public (Admin + Frontend Viewer)</option>
+                            <option value="private">Private (Admin Backend Only)</option>
+                        </select>
+                        <p class="launchpad-plugin-helper-text">Public plugins are shown to users. Private plugins stay internal to admin.</p>
+                    </div>
 
-                <button type="submit" id="launchpadPluginSaveBtn">Save Plugin</button>
+                </div>
+
+                <div class="launchpad-plugin-modal-actions">
+                    <button type="button" id="launchpadPluginCancelBtn" class="launchpad-plugin-cancel-btn">Cancel</button>
+                    <button type="submit" id="launchpadPluginSaveBtn" class="launchpad-plugin-save-btn">Save Plugin</button>
+                </div>
             </form>
         </div>
     </div>

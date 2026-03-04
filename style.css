@@ -354,7 +354,7 @@ body {
     padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .launchpad-plugin-media {
@@ -384,6 +384,36 @@ body {
     margin: 0;
     font-size: 1.05em;
     color: var(--secondary-color);
+}
+
+.launchpad-plugin-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.launchpad-plugin-visibility {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.76em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.launchpad-plugin-visibility.public {
+    background-color: rgba(5, 150, 105, 0.14);
+    color: #047857;
+}
+
+.launchpad-plugin-visibility.private {
+    background-color: rgba(37, 99, 235, 0.14);
+    color: #1d4ed8;
 }
 
 .launchpad-plugin-host,
@@ -607,6 +637,219 @@ body {
 
 .modal.active {
     display: flex; /* Show when active */
+}
+
+/* Launchpad plugin modal refinements */
+#launchpadPluginModal.modal {
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: rgba(6, 16, 32, 0.68);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.24s ease, visibility 0.24s ease;
+}
+
+#launchpadPluginModal.modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#launchpadPluginModal .launchpad-plugin-modal-content {
+    width: min(680px, 96vw);
+    max-width: 680px;
+    max-height: 90vh;
+    padding: 0;
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 26px 70px rgba(15, 27, 46, 0.34);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+    transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+#launchpadPluginModal.modal.active .launchpad-plugin-modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.launchpad-plugin-modal-header {
+    padding: 28px 30px 18px;
+    border-bottom: 1px solid #e7edf6;
+    background: linear-gradient(120deg, #f9fcff 0%, #eef5ff 100%);
+}
+
+.launchpad-plugin-modal-header h2 {
+    margin: 0;
+    text-align: left;
+    font-size: 1.45em;
+    color: #24364c;
+}
+
+.launchpad-plugin-modal-header p {
+    margin: 8px 0 0;
+    font-size: 0.95em;
+    color: #5f7086;
+    line-height: 1.45;
+}
+
+#launchpadPluginModal .launchpad-plugin-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: #ebf2fb;
+    color: #4a5f79;
+    font-size: 1.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+#launchpadPluginModal .launchpad-plugin-close:hover,
+#launchpadPluginModal .launchpad-plugin-close:focus {
+    background: #dce8f8;
+    color: #24364c;
+    transform: translateY(-1px);
+}
+
+.launchpad-plugin-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+}
+
+.launchpad-plugin-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 30px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.launchpad-plugin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.launchpad-plugin-field label {
+    margin: 0;
+    font-size: 0.93em;
+    font-weight: 700;
+    color: #2e435b;
+}
+
+.launchpad-plugin-form input[type="text"],
+.launchpad-plugin-form input[type="url"],
+.launchpad-plugin-form input[type="password"],
+.launchpad-plugin-form input[type="file"],
+.launchpad-plugin-form select {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #ccd7e5;
+    border-radius: 12px;
+    font-size: 0.95em;
+    color: #24364c;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.launchpad-plugin-form input[type="file"] {
+    padding: 10px 12px;
+    border-style: dashed;
+    background: #f9fbff;
+}
+
+.launchpad-plugin-form input[type="file"]::file-selector-button {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.launchpad-plugin-form input[type="file"]::file-selector-button:hover {
+    background: #2586c2;
+}
+
+.launchpad-plugin-form input:focus,
+.launchpad-plugin-form select:focus {
+    outline: none;
+    border-color: #4f9ce6;
+    box-shadow: 0 0 0 4px rgba(79, 156, 230, 0.16);
+}
+
+.launchpad-plugin-helper-text {
+    margin: 2px 0 0;
+    font-size: 0.82em;
+    line-height: 1.45;
+    color: #5c6f86;
+}
+
+.launchpad-plugin-modal-actions {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 30px 22px;
+    border-top: 1px solid #e7edf6;
+    background: #ffffff;
+}
+
+.launchpad-plugin-cancel-btn,
+.launchpad-plugin-save-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-weight: 700;
+    font-size: 0.92em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.launchpad-plugin-cancel-btn {
+    background: #e9eef6;
+    color: #2f435c;
+}
+
+.launchpad-plugin-cancel-btn:hover {
+    background: #dde6f2;
+    transform: translateY(-1px);
+}
+
+.launchpad-plugin-save-btn {
+    background: linear-gradient(135deg, #1f8de0 0%, #2d6cdf 100%);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(41, 116, 219, 0.26);
+}
+
+.launchpad-plugin-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(41, 116, 219, 0.32);
 }
 
 /* Specific rule for the confirmation modal to ensure it's hidden */
@@ -989,6 +1232,42 @@ body {
 
     .modal-content h2 {
         font-size: 1.5em;
+    }
+
+    #launchpadPluginModal .launchpad-plugin-modal-content {
+        width: min(96vw, 640px);
+        max-height: 94vh;
+        border-radius: 14px;
+    }
+
+    .launchpad-plugin-modal-header {
+        padding: 22px 20px 14px;
+    }
+
+    .launchpad-plugin-form {
+        padding: 0;
+    }
+
+    .launchpad-plugin-modal-body {
+        padding: 18px 20px 12px;
+        gap: 12px;
+    }
+
+    .launchpad-plugin-modal-actions {
+        padding: 12px 20px 16px;
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .launchpad-plugin-cancel-btn,
+    .launchpad-plugin-save-btn {
+        width: 100%;
+    }
+
+    .launchpad-plugin-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 
     #saveContentBtn {
