@@ -35,6 +35,7 @@ let launchpadPluginsUnsubscribe = null;
 let launchpadPluginsCache = [];
 let editingLaunchpadPluginId = null;
 let editingLaunchpadPluginImageUrl = '';
+let launchpadActivePreviewPluginId = null;
 
 // DOM Elements
 const sidebarWrapper = document.querySelector('.sidebar-wrapper');
@@ -67,6 +68,13 @@ const launchpadPluginImageUrlInput = document.getElementById('launchpadPluginIma
 const launchpadPluginUrlInput = document.getElementById('launchpadPluginUrl');
 const launchpadPluginVisibilityInput = document.getElementById('launchpadPluginVisibility');
 const launchpadPluginCancelBtn = document.getElementById('launchpadPluginCancelBtn');
+const launchpadSection = document.getElementById('launchpad-section');
+const launchpadContentContainer = document.getElementById('launchpad-container');
+const launchpadBackendViewer = document.getElementById('launchpadBackendViewer');
+const launchpadBackendViewerTitle = document.getElementById('launchpadBackendViewerTitle');
+const launchpadBackendViewerHost = document.getElementById('launchpadBackendViewerHost');
+const launchpadBackendViewerCloseBtn = document.getElementById('launchpadBackendViewerCloseBtn');
+const launchpadBackendIframe = document.getElementById('launchpadBackendIframe');
 
 // Homepage Buttons
 const fixedUploadButton = document.getElementById('fixedUploadButton');
@@ -96,6 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const targetSectionId = e.currentTarget.dataset.section + '-section';
             const targetSectionName = e.currentTarget.dataset.section;
+
+            if (targetSectionName !== 'launchpad') {
+                closeLaunchpadBackendPreview();
+            }
 
             activeSection = targetSectionName;
             searchInput.value = ''; // Clear search input visually
@@ -173,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (launchpadPluginCancelBtn) {
         launchpadPluginCancelBtn.addEventListener('click', closeLaunchpadPluginModal);
+    }
+    if (launchpadBackendViewerCloseBtn) {
+        launchpadBackendViewerCloseBtn.addEventListener('click', closeLaunchpadBackendPreview);
     }
     if (launchpadBlankCloseBtn) {
         launchpadBlankCloseBtn.addEventListener('click', closeLaunchpadBlankModal);
@@ -681,6 +696,55 @@ function resolveHostLabel(url) {
     }
 }
 
+function syncLaunchpadPreviewSelection() {
+    document.querySelectorAll('#launchpad-container .launchpad-plugin-card').forEach((card) => {
+        const isActive = card.dataset.pluginId === launchpadActivePreviewPluginId;
+        card.classList.toggle('preview-active', isActive);
+    });
+}
+
+function setLaunchpadBackendPreviewMode(isOpen) {
+    if (!launchpadSection || !launchpadContentContainer || !launchpadBackendViewer) return;
+    launchpadSection.classList.toggle('plugin-preview-open', Boolean(isOpen));
+    if (isOpen) {
+        launchpadContentContainer.setAttribute('aria-hidden', 'true');
+    } else {
+        launchpadContentContainer.removeAttribute('aria-hidden');
+    }
+}
+
+function openLaunchpadBackendPreview(plugin) {
+    if (!plugin || !plugin.id || !launchpadBackendViewer || !launchpadBackendIframe) return;
+
+    const pluginUrl = normalizeUrl(plugin.projectUrl || plugin.url || '');
+    if (!pluginUrl) {
+        console.warn('[Launchpad][Admin] Invalid plugin URL for preview:', plugin?.projectUrl || plugin?.url || '');
+        showToast('Cannot preview plugin: invalid project URL.', 'error', 3500);
+        return;
+    }
+
+    const pluginTitle = plugin.title || plugin.name || 'Untitled Plugin';
+    launchpadActivePreviewPluginId = plugin.id;
+    if (launchpadBackendViewerTitle) {
+        launchpadBackendViewerTitle.textContent = pluginTitle;
+    }
+    if (launchpadBackendViewerHost) {
+        launchpadBackendViewerHost.textContent = resolveHostLabel(pluginUrl);
+    }
+
+    setLaunchpadBackendPreviewMode(true);
+    launchpadBackendIframe.src = pluginUrl;
+    syncLaunchpadPreviewSelection();
+}
+
+function closeLaunchpadBackendPreview() {
+    if (!launchpadBackendViewer || !launchpadBackendIframe) return;
+    setLaunchpadBackendPreviewMode(false);
+    launchpadBackendIframe.src = 'about:blank';
+    launchpadActivePreviewPluginId = null;
+    syncLaunchpadPreviewSelection();
+}
+
 function openLaunchpadPluginModal(isEditMode = false) {
     if (!launchpadPluginModal) return;
     if (!isEditMode) {
@@ -898,6 +962,7 @@ function renderLaunchpadPlugins(searchTerm = '') {
     filteredPlugins.forEach((plugin) => {
         const card = document.createElement('article');
         card.className = 'launchpad-plugin-card';
+        card.dataset.pluginId = plugin.id;
         const visibility = plugin.visibility === 'public' ? 'public' : 'private';
         const visibilityLabel = visibility === 'public' ? 'Public' : 'Private';
 
@@ -915,6 +980,22 @@ function renderLaunchpadPlugins(searchTerm = '') {
             <p class="launchpad-plugin-host"><strong>Host:</strong> ${escapeHtml(hostLabel)}</p>
             <p class="launchpad-plugin-url">${escapeHtml(plugin.url || '')}</p>
         `;
+
+        const mediaContainer = card.querySelector('.launchpad-plugin-media');
+        if (mediaContainer) {
+            mediaContainer.classList.add('clickable');
+            mediaContainer.setAttribute('role', 'button');
+            mediaContainer.setAttribute('tabindex', '0');
+            mediaContainer.setAttribute('aria-label', `Preview ${plugin.name || 'plugin'}`);
+            mediaContainer.title = 'Preview Plugin';
+            mediaContainer.addEventListener('click', () => openLaunchpadBackendPreview(plugin));
+            mediaContainer.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault();
+                    openLaunchpadBackendPreview(plugin);
+                }
+            });
+        }
 
         const cardImage = card.querySelector('.launchpad-plugin-media img');
         if (cardImage) {
@@ -948,6 +1029,13 @@ function renderLaunchpadPlugins(searchTerm = '') {
         const actions = document.createElement('div');
         actions.className = 'launchpad-plugin-actions';
 
+        const previewButton = document.createElement('button');
+        previewButton.type = 'button';
+        previewButton.className = 'launchpad-plugin-preview-btn';
+        previewButton.innerHTML = '<i class="fas fa-eye"></i> Preview';
+        previewButton.addEventListener('click', () => openLaunchpadBackendPreview(plugin));
+        actions.appendChild(previewButton);
+
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'launchpad-plugin-edit-btn';
@@ -959,6 +1047,8 @@ function renderLaunchpadPlugins(searchTerm = '') {
 
         contentContainer.appendChild(card);
     });
+
+    syncLaunchpadPreviewSelection();
 }
 
 function loadLaunchpadPlugins(searchTerm = '') {
@@ -1006,6 +1096,29 @@ function loadLaunchpadPlugins(searchTerm = '') {
                     });
                 }
             });
+
+            if (launchpadActivePreviewPluginId) {
+                const activePlugin = launchpadPluginsCache.find((plugin) => plugin.id === launchpadActivePreviewPluginId);
+                if (!activePlugin) {
+                    closeLaunchpadBackendPreview();
+                } else {
+                    const activePluginUrl = normalizeUrl(activePlugin.projectUrl || activePlugin.url || '');
+                    if (launchpadBackendViewerTitle) {
+                        launchpadBackendViewerTitle.textContent = activePlugin.title || activePlugin.name || 'Untitled Plugin';
+                    }
+                    if (launchpadBackendViewerHost) {
+                        launchpadBackendViewerHost.textContent = resolveHostLabel(activePluginUrl);
+                    }
+                    if (
+                        activePluginUrl &&
+                        launchpadSection?.classList.contains('plugin-preview-open') &&
+                        launchpadBackendIframe &&
+                        launchpadBackendIframe.src !== activePluginUrl
+                    ) {
+                        launchpadBackendIframe.src = activePluginUrl;
+                    }
+                }
+            }
 
             renderLaunchpadPlugins(currentSearchTerm);
         }, (error) => {

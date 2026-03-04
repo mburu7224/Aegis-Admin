@@ -126,6 +126,27 @@
                         </button>
                     </div>
                     <div id="launchpad-container" class="content-list"></div>
+                    <div id="launchpadBackendViewer" class="launchpad-backend-viewer" aria-live="polite">
+                        <div class="launchpad-backend-viewer-header">
+                            <div class="launchpad-backend-viewer-title-group">
+                                <h3 id="launchpadBackendViewerTitle">Plugin Preview</h3>
+                                <p id="launchpadBackendViewerHost">Waiting for selection...</p>
+                            </div>
+                            <button id="launchpadBackendViewerCloseBtn" type="button" class="launchpad-backend-close-btn">
+                                <i class="fas fa-times"></i> Close Preview
+                            </button>
+                        </div>
+                        <div class="launchpad-backend-iframe-wrap">
+                            <iframe
+                                id="launchpadBackendIframe"
+                                title="Launchpad Backend Plugin Preview"
+                                src="about:blank"
+                                loading="lazy"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                allow="fullscreen"
+                            ></iframe>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- New Archive Section -->

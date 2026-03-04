@@ -427,13 +427,14 @@ body {
 .launchpad-plugin-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-top: 6px;
 }
 
+.launchpad-plugin-preview-btn,
 .launchpad-plugin-edit-btn {
     border: none;
     border-radius: 8px;
-    background: var(--primary-color);
     color: #fff;
     padding: 8px 12px;
     font-size: 0.86em;
@@ -444,9 +445,154 @@ body {
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
+.launchpad-plugin-preview-btn {
+    background: #0f766e;
+}
+
+.launchpad-plugin-preview-btn:hover {
+    background: #0b5f59;
+    transform: translateY(-1px);
+}
+
+.launchpad-plugin-edit-btn {
+    background: var(--primary-color);
+}
+
 .launchpad-plugin-edit-btn:hover {
     background: #2980b9;
     transform: translateY(-1px);
+}
+
+.launchpad-plugin-media.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.launchpad-plugin-media.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.launchpad-plugin-card.preview-active {
+    border-color: #2892c8;
+    box-shadow: 0 0 0 3px rgba(40, 146, 200, 0.14), 0 10px 22px rgba(16, 94, 141, 0.12);
+}
+
+#launchpad-section {
+    position: relative;
+}
+
+#launchpad-section > h2,
+#launchpad-section .launchpad-admin-actions {
+    opacity: 1;
+    max-height: 140px;
+    overflow: hidden;
+    transform: translateY(0);
+    transition: opacity 0.24s ease, max-height 0.24s ease, margin 0.24s ease, transform 0.24s ease;
+}
+
+#launchpad-section.plugin-preview-open > h2,
+#launchpad-section.plugin-preview-open .launchpad-admin-actions {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+
+#launchpad-section #launchpad-container {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 6000px;
+    overflow: visible;
+    transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+}
+
+#launchpad-section.plugin-preview-open #launchpad-container {
+    opacity: 0;
+    transform: translateY(8px);
+    max-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.launchpad-backend-viewer {
+    margin-top: 0;
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(10px);
+    overflow: hidden;
+    pointer-events: none;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: var(--card-background);
+    box-shadow: 0 16px 36px rgba(20, 41, 68, 0.12);
+    transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, border-color 0.28s ease;
+}
+
+#launchpad-section.plugin-preview-open .launchpad-backend-viewer {
+    margin-top: 18px;
+    max-height: 85vh;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    border-color: #d9e6f4;
+}
+
+.launchpad-backend-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5edf6;
+    background: linear-gradient(120deg, #f9fcff 0%, #eef5ff 100%);
+}
+
+.launchpad-backend-viewer-title-group h3 {
+    margin: 0;
+    color: #24364c;
+    font-size: 1.04em;
+}
+
+.launchpad-backend-viewer-title-group p {
+    margin: 3px 0 0;
+    color: #607287;
+    font-size: 0.86em;
+}
+
+.launchpad-backend-close-btn {
+    border: none;
+    border-radius: 9px;
+    background: #25394f;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.84em;
+    padding: 9px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.launchpad-backend-close-btn:hover {
+    background: #1b2b3d;
+    transform: translateY(-1px);
+}
+
+.launchpad-backend-iframe-wrap {
+    width: 100%;
+    background: #f4f8ff;
+}
+
+#launchpadBackendIframe {
+    width: 100%;
+    height: min(70vh, 860px);
+    border: 0;
+    background: #fff;
+    display: block;
 }
 
 /* Blank template modal content */
@@ -1268,6 +1414,31 @@ body {
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+    }
+
+    .launchpad-plugin-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .launchpad-plugin-preview-btn,
+    .launchpad-plugin-edit-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .launchpad-backend-viewer-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .launchpad-backend-close-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #launchpadBackendIframe {
+        height: min(62vh, 680px);
     }
 
     #saveContentBtn {
