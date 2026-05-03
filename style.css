@@ -119,61 +119,83 @@ body {
 .main-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 15px 30px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 18px;
     background-color: var(--card-background);
     border-bottom: 1px solid var(--border-color);
     position: sticky; /* Sticky positioning for header within its parent */
     top: 0; /* Sticks to the top of its scrolling container */
-    z-index: 100; /* Above scrolling content */
+    z-index: 1700; /* Above plugin viewers */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Subtle shadow for header */
     height: var(--header-height-desktop); /* Fixed height */
     box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* Hamburger menu toggle - default hidden on desktop */
-.menu-toggle {
-    display: none; /* Hidden by default on desktop */
+/* Top bar controls */
+.menu-toggle,
+.topbar-close-btn,
+.settings-gear {
+    display: inline-flex;
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
     background: none;
-    border: none;
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    padding: 5px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    padding: 0;
+    border-radius: 12px;
+    transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
     color: var(--text-color); /* Ensure icon color is visible */
+    align-items: center;
+    justify-content: center;
+    background: #fff;
 }
 
-.menu-toggle:hover {
+.menu-toggle:hover,
+.topbar-close-btn:hover,
+.settings-gear:hover {
     background-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
 }
 
-.menu-toggle i {
-    font-size: 28px; /* Adjust icon size */
+.menu-toggle i,
+.topbar-close-btn i,
+.settings-gear i {
+    font-size: 18px; /* Adjust icon size */
 }
 
 .search-bar {
+    flex: 0 1 clamp(92px, 9vw, 156px);
+    width: clamp(92px, 9vw, 156px);
+    min-width: 0;
     display: flex;
-    flex-grow: 1;
-    margin: 0 20px;
+    margin: 0;
     border: 1px solid var(--border-color);
-    border-radius: 25px;
+    border-radius: 999px;
     overflow: hidden;
     background-color: var(--card-background);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .search-bar input {
-    flex-grow: 1;
-    padding: 10px 18px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 9px 10px 9px 12px;
     border: none;
     outline: none;
-    font-size: 1em;
+    font-size: 0.9em;
 }
 
 .search-bar button {
+    flex: 0 0 34px;
+    width: 34px;
     background-color: transparent;
     border: none;
-    padding: 0 15px;
+    padding: 0;
     cursor: pointer;
     transition: background-color 0.3s ease;
     color: var(--text-color); /* Ensure icon color is visible */
@@ -181,6 +203,46 @@ body {
 
 .search-bar button:hover {
     background-color: rgba(0, 0, 0, 0.03);
+}
+
+.topbar-close-btn {
+    flex-basis: 0;
+    width: 0;
+    min-width: 0;
+    border-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.92);
+    overflow: hidden;
+}
+
+.topbar-close-btn.visible {
+    flex-basis: 42px;
+    width: 42px;
+    min-width: 42px;
+    border-width: 1px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.date-filter {
+    flex: 0 1 clamp(122px, 13vw, 166px);
+    width: clamp(122px, 13vw, 166px);
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.date-filter input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fff;
+    font-size: 0.86em;
 }
 
 /* Content Display Area (This is the scrollable part below the fixed header) */
@@ -1466,5 +1528,616 @@ body {
     .fixed-upload-btn i {
         margin-right: 8px;
         font-size: 1em;
+    }
+}
+
+body.launchpad-plugin-active .main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1750;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer {
+    inset: var(--header-height-desktop) 0 0 0;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-header {
+    padding: 16px 18px 14px;
+}
+
+body.launchpad-plugin-active #launchpadBackendViewerCloseBtn,
+body.launchpad-plugin-active .launchpad-floating-menu-btn {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        gap: 6px;
+        padding: 0 10px;
+    }
+
+    .menu-toggle,
+    .topbar-close-btn,
+    .settings-gear {
+        flex-basis: 38px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+    }
+
+    .search-bar {
+        flex-basis: clamp(74px, 20vw, 110px);
+        width: clamp(74px, 20vw, 110px);
+    }
+
+    .date-filter {
+        flex-basis: clamp(102px, 28vw, 128px);
+        width: clamp(102px, 28vw, 128px);
+    }
+
+    .date-filter input[type="date"] {
+        font-size: 0.78em;
+        padding-left: 10px;
+    }
+
+    .topbar-close-btn.visible {
+        flex-basis: 38px;
+        width: 38px;
+        min-width: 38px;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-viewer {
+        inset: var(--header-height-mobile) 0 0 0;
+    }
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 12, 22, 0.42);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 1490;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.launchpad-floating-menu-btn {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 18px;
+    background: rgba(13, 20, 34, 0.86);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 42px rgba(5, 10, 18, 0.28);
+    backdrop-filter: blur(18px);
+    cursor: pointer;
+    z-index: 1600;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-12px) scale(0.96);
+    transition: opacity 0.28s ease, transform 0.28s ease, background-color 0.2s ease;
+}
+
+.launchpad-floating-menu-btn:hover,
+.launchpad-floating-menu-btn.is-open {
+    background: rgba(24, 36, 59, 0.94);
+}
+
+.launchpad-floating-menu-btn i {
+    font-size: 1.2rem;
+}
+
+body.launchpad-plugin-active .launchpad-floating-menu-btn {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+body.launchpad-plugin-active .main-content-wrapper {
+    margin-left: 0;
+}
+
+body.launchpad-plugin-active .sidebar-wrapper {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    bottom: 18px;
+    width: min(320px, calc(100vw - 36px));
+    max-width: 320px;
+    height: auto;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 22px 60px rgba(6, 13, 24, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(calc(-100% - 28px));
+    transition: transform 0.32s ease, opacity 0.32s ease;
+    z-index: 1550;
+}
+
+body.launchpad-plugin-active .sidebar-wrapper.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer {
+    position: fixed;
+    inset: var(--header-height-desktop) 0 0 0;
+    margin: 0;
+    max-height: none;
+    opacity: 1;
+    transform: none;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at top right, rgba(57, 109, 196, 0.18), transparent 28%),
+        linear-gradient(180deg, #eef4fb 0%, #e4edf8 100%);
+    box-shadow: none;
+    z-index: 1400;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-header {
+    flex-shrink: 0;
+    min-height: 88px;
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid rgba(36, 55, 82, 0.12);
+    background: rgba(244, 248, 253, 0.84);
+    backdrop-filter: blur(20px);
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-title-group h3 {
+    font-size: 1.05rem;
+    color: #203047;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-title-group p {
+    color: #4f647d;
+}
+
+body.launchpad-plugin-active .launchpad-backend-close-btn {
+    display: none;
+}
+
+body.launchpad-plugin-active .launchpad-backend-iframe-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    background: transparent;
+}
+
+body.launchpad-plugin-active #launchpadBackendIframe {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border: none;
+    background: #ffffff;
+}
+
+#launchpad-section.plugin-preview-open .launchpad-backend-viewer {
+    margin-top: 0;
+    max-height: none;
+}
+
+@media (max-width: 768px) {
+    .launchpad-floating-menu-btn {
+        top: 14px;
+        left: 14px;
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+    }
+
+    body.launchpad-plugin-active .sidebar-wrapper {
+        top: 12px;
+        left: 12px;
+        bottom: 12px;
+        width: min(304px, calc(100vw - 24px));
+        border-radius: 24px;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-viewer-header {
+        padding: 16px 16px 14px;
+        align-items: flex-start;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-close-btn {
+        width: auto;
+    }
+
+    body.launchpad-plugin-active #launchpadBackendIframe {
+        height: 100%;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-viewer {
+        inset: var(--header-height-mobile) 0 0 0;
+    }
+}
+
+/* Final top bar overrides */
+.main-header {
+    justify-content: flex-start;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.menu-toggle,
+.topbar-close-btn,
+.settings-gear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text-color);
+}
+
+.menu-toggle i,
+.topbar-close-btn i,
+.settings-gear i {
+    font-size: 18px;
+}
+
+.search-bar {
+    flex: 0 1 clamp(92px, 9vw, 156px);
+    width: clamp(92px, 9vw, 156px);
+    min-width: 0;
+    margin: 0;
+    height: 42px;
+    border-radius: 999px;
+}
+
+.search-bar input {
+    min-width: 0;
+    padding: 9px 10px 9px 12px;
+}
+
+.search-bar button {
+    width: 34px;
+    padding: 0;
+}
+
+.date-filter {
+    flex: 0 1 clamp(122px, 13vw, 166px);
+    width: clamp(122px, 13vw, 166px);
+    min-width: 0;
+}
+
+.date-filter input[type="date"] {
+    height: 42px;
+}
+
+.topbar-close-btn {
+    flex-basis: 0;
+    width: 0;
+    min-width: 0;
+    border-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.topbar-close-btn.visible {
+    flex-basis: 42px;
+    width: 42px;
+    min-width: 42px;
+    border-width: 1px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        gap: 6px;
+        padding: 0 10px;
+    }
+
+    .menu-toggle,
+    .topbar-close-btn.visible,
+    .settings-gear {
+        flex-basis: 38px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+    }
+
+    .search-bar {
+        flex-basis: clamp(74px, 20vw, 110px);
+        width: clamp(74px, 20vw, 110px);
+        height: 38px;
+    }
+
+    .date-filter {
+        flex-basis: clamp(102px, 28vw, 128px);
+        width: clamp(102px, 28vw, 128px);
+    }
+
+    .date-filter input[type="date"] {
+        height: 38px;
+        font-size: 0.78em;
+    }
+}
+
+/* Phase 2 final refinement */
+body:not(.launchpad-plugin-active) .main-header {
+    justify-content: flex-end;
+}
+
+body:not(.launchpad-plugin-active) .main-header .search-bar {
+    flex: 0 1 25%;
+    width: 25%;
+    max-width: 340px;
+    min-width: 180px;
+    margin-left: auto;
+}
+
+body.launchpad-plugin-active .main-header {
+    display: none;
+}
+
+.launchpad-backend-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 76px;
+    padding: 18px 20px;
+}
+
+.launchpad-header-menu-btn,
+.launchpad-backend-close-btn {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(36, 55, 82, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1f3046;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+body.launchpad-plugin-active #launchpadBackendViewerCloseBtn {
+    display: inline-flex !important;
+}
+
+.launchpad-header-menu-btn:hover,
+.launchpad-backend-close-btn:hover,
+.launchpad-header-menu-btn.is-open {
+    background: #ffffff;
+    border-color: rgba(36, 55, 82, 0.28);
+    transform: translateY(-1px);
+}
+
+.launchpad-backend-viewer-title-group {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.launchpad-backend-viewer-title-group h3 {
+    margin: 0;
+    font-size: 1.02rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.launchpad-backend-viewer-title-group p {
+    display: none;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer {
+    inset: 0;
+    z-index: 1500;
+}
+
+body.launchpad-plugin-active .sidebar-overlay {
+    z-index: 1550;
+}
+
+body.launchpad-plugin-active .sidebar-wrapper {
+    position: fixed;
+    top: 84px;
+    left: 16px;
+    width: min(360px, calc(100vw - 32px));
+    max-width: 360px;
+    height: auto;
+    max-height: min(70vh, 520px);
+    border-radius: 24px;
+    overflow: auto;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-18px) scaleY(0.96);
+    transform-origin: top left;
+    transition: transform 0.28s ease, opacity 0.28s ease, visibility 0.28s ease;
+    z-index: 1600;
+}
+
+body.launchpad-plugin-active .sidebar-wrapper.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scaleY(1);
+}
+
+@media (max-width: 768px) {
+    body:not(.launchpad-plugin-active) .main-header .search-bar {
+        width: 38%;
+        min-width: 124px;
+    }
+
+    body:not(.launchpad-plugin-active) .main-header .date-filter {
+        width: clamp(98px, 30vw, 128px);
+        flex-basis: clamp(98px, 30vw, 128px);
+    }
+
+    .launchpad-backend-viewer-header {
+        padding: 16px 14px;
+        gap: 10px;
+    }
+
+    body.launchpad-plugin-active .sidebar-wrapper {
+        top: 76px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        max-width: none;
+        transform-origin: top center;
+    }
+}
+
+@media (max-width: 1024px) {
+    body:not(.launchpad-plugin-active) .sidebar-overlay {
+        display: none !important;
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-wrapper {
+        position: sticky;
+        top: var(--header-height-mobile);
+        left: 0;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        z-index: 120;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-header {
+        display: none;
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-nav {
+        overflow-x: auto;
+        background: #fff;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-nav ul {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 10px 12px;
+        overflow-x: auto;
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-nav li {
+        flex: 0 0 auto;
+    }
+
+    body:not(.launchpad-plugin-active) .sidebar-nav .nav-item {
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 10px 14px;
+    }
+}
+
+/* Plugin header height optimization */
+body.launchpad-plugin-active .launchpad-backend-viewer-header {
+    min-height: 42px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 2px 6px;
+    gap: 6px;
+    align-items: center;
+}
+
+body.launchpad-plugin-active .launchpad-header-menu-btn,
+body.launchpad-plugin-active #launchpadBackendViewerCloseBtn {
+    flex: 0 0 34px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    border-radius: 10px;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-title-group {
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+}
+
+body.launchpad-plugin-active .launchpad-backend-viewer-title-group h3 {
+    font-size: 0.94rem;
+    line-height: 1.1;
+    margin: 0;
+}
+
+body.launchpad-plugin-active .sidebar-wrapper {
+    top: 48px;
+}
+
+@media (max-width: 768px) {
+    body.launchpad-plugin-active .launchpad-backend-viewer-header {
+        min-height: 40px;
+        height: 40px;
+        padding: 2px 5px;
+        gap: 5px;
+    }
+
+    body.launchpad-plugin-active .launchpad-header-menu-btn,
+    body.launchpad-plugin-active #launchpadBackendViewerCloseBtn {
+        flex-basis: 32px;
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-viewer-title-group {
+        min-height: 32px;
+    }
+
+    body.launchpad-plugin-active .launchpad-backend-viewer-title-group h3 {
+        font-size: 0.88rem;
+    }
+
+    body.launchpad-plugin-active .sidebar-wrapper {
+        top: 44px;
+    }
+}
+
+/* Slightly taller default homepage/category header */
+:root {
+    --header-height-desktop: 88px;
+    --header-height-mobile: 64px;
+}
+
+body:not(.launchpad-plugin-active) .main-header {
+    height: var(--header-height-desktop);
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    body:not(.launchpad-plugin-active) .main-header {
+        height: var(--header-height-mobile);
     }
 }

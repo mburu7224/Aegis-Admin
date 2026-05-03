@@ -30,6 +30,7 @@ const launchpadPluginsCollectionRef = collection(db, "LaunchpadPlugins");
 // --- Global Variables and DOM Elements ---
 let activeSection = 'home';
 let currentSearchTerm = '';
+let currentFilterDate = null;
 let editingDocId = null; // Stores the ID of the document being edited
 let launchpadPluginsUnsubscribe = null;
 let launchpadPluginsCache = [];
@@ -39,10 +40,13 @@ let launchpadActivePreviewPluginId = null;
 
 // DOM Elements
 const sidebarWrapper = document.querySelector('.sidebar-wrapper');
-const menuToggle = document.querySelector('.menu-toggle');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
 const navItems = document.querySelectorAll('.nav-item');
 const contentSections = document.querySelectorAll('.content-section');
 const searchInput = document.getElementById('searchInput');
+const eventDateFilterInput = document.getElementById('eventDateFilter');
+const settingsGear = document.getElementById('settingsGear');
+const launchpadBackendMenuBtn = document.getElementById('launchpadBackendMenuBtn');
 
 // Modal Elements
 const addContentModal = document.getElementById('addContentModal');
@@ -89,12 +93,41 @@ const confirmNoBtn = document.getElementById('confirmNo');
 // Toast Container
 const toastContainer = document.getElementById('toastContainer');
 
+function setSidebarOpen(isOpen) {
+    if (sidebarWrapper) {
+        sidebarWrapper.classList.toggle('active', Boolean(isOpen));
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.toggle('active', Boolean(isOpen));
+    }
+
+    [launchpadBackendMenuBtn].forEach((button) => {
+        if (!button) return;
+        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        button.classList.toggle('is-open', Boolean(isOpen));
+    });
+}
+
+function toggleSidebar() {
+    setSidebarOpen(!(sidebarWrapper && sidebarWrapper.classList.contains('active')));
+}
+
+function closeSidebar() {
+    setSidebarOpen(false);
+}
+
 // --- Event Listeners on DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Mobile Hamburger Menu Toggle ---
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            sidebarWrapper.classList.toggle('active');
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+    if (launchpadBackendMenuBtn) {
+        launchpadBackendMenuBtn.addEventListener('click', toggleSidebar);
+    }
+    if (settingsGear) {
+        settingsGear.addEventListener('click', () => {
+            showToast('Settings panel coming soon.', 'info');
         });
     }
 
@@ -112,6 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
             activeSection = targetSectionName;
             searchInput.value = ''; // Clear search input visually
             currentSearchTerm = ''; // Reset search term state
+            if (eventDateFilterInput) {
+                eventDateFilterInput.value = '';
+            }
+            currentFilterDate = null;
 
             // Update active navigation item
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -123,8 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetSection) {
                 targetSection.classList.add('active');
                 // Auto-close sidebar on mobile after selection
-                if (window.innerWidth <= 768 && sidebarWrapper.classList.contains('active')) {
-                    sidebarWrapper.classList.remove('active');
+                if (window.innerWidth <= 768 || document.body.classList.contains('launchpad-plugin-active')) {
+                    closeSidebar();
                 }
             }
 
@@ -133,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeSection === 'launchpad') {
                     loadLaunchpadPlugins(currentSearchTerm);
                 } else {
-                    loadContentFirebase(activeSection, currentSearchTerm);
+                    loadContentFirebase(activeSection, currentSearchTerm, currentFilterDate);
                 }
             }
         });
@@ -146,10 +183,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (activeSection === 'launchpad') {
                 loadLaunchpadPlugins(currentSearchTerm);
             } else {
-                loadContentFirebase(activeSection, currentSearchTerm);
+                loadContentFirebase(activeSection, currentSearchTerm, currentFilterDate);
             }
         }
     });
+
+    if (eventDateFilterInput) {
+        eventDateFilterInput.addEventListener('change', (e) => {
+            currentFilterDate = e.target.value || null;
+            if (activeSection !== 'home' && activeSection !== 'launchpad') {
+                loadContentFirebase(activeSection, currentSearchTerm, currentFilterDate);
+            }
+        });
+    }
 
     // --- Fixed Upload Button Click (on Homepage) ---
     if (fixedUploadButton) {
@@ -705,11 +751,14 @@ function syncLaunchpadPreviewSelection() {
 
 function setLaunchpadBackendPreviewMode(isOpen) {
     if (!launchpadSection || !launchpadContentContainer || !launchpadBackendViewer) return;
+    document.body.classList.toggle('launchpad-plugin-active', Boolean(isOpen));
     launchpadSection.classList.toggle('plugin-preview-open', Boolean(isOpen));
     if (isOpen) {
         launchpadContentContainer.setAttribute('aria-hidden', 'true');
+        closeSidebar();
     } else {
         launchpadContentContainer.removeAttribute('aria-hidden');
+        closeSidebar();
     }
 }
 

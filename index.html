@@ -1,21 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>ADMIN UPDATE</title>
-  <link rel="stylesheet" href="./style.css">
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ruiru Media House - Admin</title>
-    <!-- CSS will be provided separately -->
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="./style.css">
     <!-- Font Awesome for icons (trash, edit, restore, etc.) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -58,20 +47,23 @@
             </nav>
         </div>
 
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Main Content Area Wrapper - Handles scrolling for content -->
         <div class="main-content-wrapper">
             <header class="main-header">
-                <button class="menu-toggle mobile-only">
-                    <!-- This is the hamburger icon -->
-                    <i class="fas fa-bars"></i>
-                </button>
                 <div class="search-bar">
                     <input type="text" id="searchInput" placeholder="Search content by title or description...">
                     <button class="search-icon">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
-                <!-- Desktop upload button is now gone from here, replaced by fixed button on homepage -->
+                <div class="date-filter">
+                    <input type="date" id="eventDateFilter" title="Filter by Event Date" aria-label="Filter by date in MM slash DD slash YYYY format" lang="en-US">
+                </div>
+                <button id="settingsGear" class="settings-gear" type="button" aria-label="Settings" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
             </header>
 
             <main class="content-display">
@@ -92,31 +84,47 @@
                 </section>
 
                 <section id="sermons-section" class="content-section">
-                    <h2>Sermons LIVE</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-church"></i></div>
+                        <h2>Sermons LIVE</h2>
+                        <p>Manage sermon streams, teachings, and ministry video content.</p>
+                    </div>
                     <div id="sermons-container" class="content-list"></div>
-                    <!-- Add New Sermon button removed -->
                 </section>
 
                 <section id="entertainment-section" class="content-section">
-                    <h2>Entertainment</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-film"></i></div>
+                        <h2>Entertainment</h2>
+                        <p>Manage music videos, creative media, and entertainment uploads.</p>
+                    </div>
                     <div id="entertainment-container" class="content-list"></div>
-                    <!-- Add New Entertainment button removed -->
                 </section>
 
                 <section id="bible-study-section" class="content-section">
-                    <h2>Bible Study</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-book-bible"></i></div>
+                        <h2>Bible Study</h2>
+                        <p>Organize Bible lesson content, study sessions, and teaching resources.</p>
+                    </div>
                     <div id="bible-study-container" class="content-list"></div>
-                    <!-- Add New Bible Study button removed -->
                 </section>
 
                 <section id="events-section" class="content-section">
-                    <h2>Events</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-calendar-alt"></i></div>
+                        <h2>Events</h2>
+                        <p>Track and manage upcoming programs, dates, and event media.</p>
+                    </div>
                     <div id="events-container" class="content-list"></div>
-                    <!-- Add New Event button removed -->
                 </section>
 
                 <section id="launchpad-section" class="content-section">
-                    <h2>Launchpad</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-rocket"></i></div>
+                        <h2>Launchpad</h2>
+                        <p>Manage internal tools and plugin experiences from one place.</p>
+                    </div>
                     <div class="launchpad-admin-actions">
                         <button id="launchpadPluginBtn" class="launchpad-plus-btn launchpad-plugin-btn" type="button">
                             <i class="fas fa-plus"></i> Plugin +
@@ -128,12 +136,22 @@
                     <div id="launchpad-container" class="content-list"></div>
                     <div id="launchpadBackendViewer" class="launchpad-backend-viewer" aria-live="polite">
                         <div class="launchpad-backend-viewer-header">
+                            <button
+                                id="launchpadBackendMenuBtn"
+                                class="launchpad-header-menu-btn"
+                                type="button"
+                                aria-label="Open plugin navigation"
+                                aria-controls="sidebarOverlay"
+                                aria-expanded="false"
+                            >
+                                <i class="fas fa-bars" aria-hidden="true"></i>
+                            </button>
                             <div class="launchpad-backend-viewer-title-group">
                                 <h3 id="launchpadBackendViewerTitle">Plugin Preview</h3>
                                 <p id="launchpadBackendViewerHost">Waiting for selection...</p>
                             </div>
-                            <button id="launchpadBackendViewerCloseBtn" type="button" class="launchpad-backend-close-btn">
-                                <i class="fas fa-times"></i> Close Preview
+                            <button id="launchpadBackendViewerCloseBtn" type="button" class="launchpad-backend-close-btn" aria-label="Close plugin">
+                                <i class="fas fa-times" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div class="launchpad-backend-iframe-wrap">
@@ -151,7 +169,11 @@
 
                 <!-- New Archive Section -->
                 <section id="archive-section" class="content-section">
-                    <h2>Archived Content</h2>
+                    <div class="welcome-card">
+                        <div class="icon-placeholder"><i class="fas fa-archive"></i></div>
+                        <h2>Archived Content</h2>
+                        <p>Review, restore, or permanently remove archived items.</p>
+                    </div>
                     <div id="archive-container" class="content-list"></div>
                     <p id="archive-empty-message" class="text-center-message" style="display: none;">No items in the archive.</p>
                 </section>
@@ -250,12 +272,7 @@
 
     <!-- Custom Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
-
     <!-- JavaScript -->
     <script type="module" src="./script.js?v=dev-launchpad-auth-off"></script>
-</body>
-</html>
-<!-- partial -->
-
 </body>
 </html>
